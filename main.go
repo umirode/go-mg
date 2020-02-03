@@ -17,13 +17,15 @@ type config struct {
 }
 
 type templates struct {
-	gitignore *asset
-	modules   *asset
-	goMod     *asset
-	goSum     *asset
-	mainGo    *asset
-	makefile  *asset
-	readmeMd  *asset
+	gitignore        *asset
+	modules          *asset
+	goMod            *asset
+	goSum            *asset
+	mainGo           *asset
+	makefile         *asset
+	readmeMd         *asset
+	dockerfile       *asset
+	dockerComposeYml *asset
 }
 
 //go:generate go-bindata templates
@@ -34,11 +36,17 @@ func main() {
 
 	outputPath := createOutputDirectory(config.output, config.name)
 
+	saveTemplate(outputPath, templates.dockerfile, nil)
 	saveTemplate(outputPath, templates.gitignore, nil)
 	saveTemplate(outputPath, templates.modules, nil)
 	saveTemplate(outputPath, templates.goSum, nil)
 	saveTemplate(outputPath, templates.makefile, nil)
 
+	saveTemplate(outputPath, templates.dockerComposeYml, struct {
+		Port string
+	}{
+		Port: getPortFromAddress(config.address),
+	})
 	saveTemplate(outputPath, templates.readmeMd, struct {
 		Name string
 	}{
@@ -56,6 +64,15 @@ func main() {
 		Network: config.network,
 		Address: config.address,
 	})
+}
+
+func getPortFromAddress(address string) string {
+	splitAddress := strings.Split(address, ":")
+	if len(splitAddress) != 2 {
+		return ""
+	}
+
+	return splitAddress[1]
 }
 
 func saveTemplate(output string, template *asset, data interface{}) {
@@ -115,11 +132,23 @@ func fillTemplate(text string, data interface{}) string {
 func getTemplates() *templates {
 	templates := &templates{}
 
+	templateDockerfile, err := templatesDockerfile()
+	if err != nil {
+		log.Fatal(err)
+	}
+	templates.dockerfile = templateDockerfile
+
 	templateReadme, err := templatesReadmeMd()
 	if err != nil {
 		log.Fatal(err)
 	}
 	templates.readmeMd = templateReadme
+
+	templateDockerComposeYml, err := templatesDockerComposeYml()
+	if err != nil {
+		log.Fatal(err)
+	}
+	templates.dockerComposeYml = templateDockerComposeYml
 
 	templateGitignore, err := templatesGitignore()
 	if err != nil {
