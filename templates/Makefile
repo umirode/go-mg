@@ -10,7 +10,5 @@ install-modules:
 	@for file in $(protoFiles) ; do \
     	protoc $$file --go_out=plugins=grpc:.; \
     done
-build:
-	go build -o=bin .
 run:
 	go run .

@@ -98,10 +98,6 @@ func saveFile(outputPath string, name string, text string) {
 func fillTemplate(text string, data interface{}) string {
 	t := template.New("")
 
-	t = t.Funcs(template.FuncMap{
-		"ToUpper": strings.ToUpper,
-	})
-
 	t, err := t.Parse(text)
 	if err != nil {
 		log.Fatal(err)

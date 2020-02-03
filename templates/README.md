@@ -1,4 +1,4 @@
-#{{.Name | ToUpper}} microservice
+# {{.Name}} microservice
 
 ## Protobuf files
 Add your repositories with protobuf files in `.modules` file (one line - one repository).
