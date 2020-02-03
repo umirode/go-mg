@@ -1,4 +1,4 @@
-module go-microservice-generator
+module go-mg
 
 go 1.13
 
