@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	lis, err := net.Listen("{{.Network}}", ":{{.Port}}")
+	lis, err := net.Listen("{{.Network}}", "{{.Address}}")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

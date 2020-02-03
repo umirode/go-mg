@@ -13,7 +13,7 @@ type config struct {
 	output  string
 	name    string
 	network string
-	port    uint
+	address string
 }
 
 type templates struct {
@@ -23,6 +23,7 @@ type templates struct {
 	goSum     *asset
 	mainGo    *asset
 	makefile  *asset
+	readmeMd  *asset
 }
 
 //go:generate go-bindata templates
@@ -38,6 +39,11 @@ func main() {
 	saveTemplate(outputPath, templates.goSum, nil)
 	saveTemplate(outputPath, templates.makefile, nil)
 
+	saveTemplate(outputPath, templates.readmeMd, struct {
+		Name string
+	}{
+		Name: config.name,
+	})
 	saveTemplate(outputPath, templates.goMod, struct {
 		Name string
 	}{
@@ -45,10 +51,10 @@ func main() {
 	})
 	saveTemplate(outputPath, templates.mainGo, struct {
 		Network string
-		Port    uint
+		Address string
 	}{
 		Network: config.network,
-		Port:    config.port,
+		Address: config.address,
 	})
 }
 
@@ -92,6 +98,10 @@ func saveFile(outputPath string, name string, text string) {
 func fillTemplate(text string, data interface{}) string {
 	t := template.New("")
 
+	t = t.Funcs(template.FuncMap{
+		"ToUpper": strings.ToUpper,
+	})
+
 	t, err := t.Parse(text)
 	if err != nil {
 		log.Fatal(err)
@@ -108,6 +118,12 @@ func fillTemplate(text string, data interface{}) string {
 
 func getTemplates() *templates {
 	templates := &templates{}
+
+	templateReadme, err := templatesReadmeMd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	templates.readmeMd = templateReadme
 
 	templateGitignore, err := templatesGitignore()
 	if err != nil {
@@ -151,24 +167,24 @@ func getTemplates() *templates {
 func getConfig() *config {
 	config := &config{}
 
-	flag.StringVar(&config.output, "output", "", "")
-	flag.StringVar(&config.name, "name", "", "")
-	flag.StringVar(&config.network, "network", "tcp", "")
-	flag.UintVar(&config.port, "port", 0, "")
+	flag.StringVar(&config.output, "output", "", "Output directory path.")
+	flag.StringVar(&config.name, "name", "", "Microservice name.")
+	flag.StringVar(&config.network, "network", "", "Network type (tcp, tcp4, tcp6, unix or unixpacket).")
+	flag.StringVar(&config.address, "address", "", "Address for tcp (\":56001\", \"127.0.0.1\", \"127.0.0.1:56001\") or path for unix socket (example/path/microservice.socket).")
 
 	flag.Parse()
 
 	if config.output == "" {
-		log.Fatal("Output is required")
+		log.Fatal("Output is required. Use -help flag for info.")
 	}
 	if config.name == "" {
-		log.Fatal("Name is required")
+		log.Fatal("Name is required. Use -help flag for info.")
 	}
 	if config.network == "" {
-		log.Fatal("Network is required")
+		log.Fatal("Network is required. Use -help flag for info.")
 	}
-	if config.port == 0 {
-		log.Fatal("Port is required")
+	if config.address == "" {
+		log.Fatal("Address is required. Use -help flag for info.")
 	}
 
 	if config.network != "tcp" &&
@@ -176,7 +192,7 @@ func getConfig() *config {
 		config.network != "tcp6" &&
 		config.network != "unix" &&
 		config.network != "unixpacket" {
-		log.Fatal("Unexpected network")
+		log.Fatal("Unexpected network. Use -help flag for info.")
 	}
 
 	return config
