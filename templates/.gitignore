@@ -3,4 +3,3 @@ vendor/
 modules/
 *.iml
 .idea/
-bin/
