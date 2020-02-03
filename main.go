@@ -5,7 +5,6 @@ import (
 	"flag"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 	"text/template"
 )
@@ -32,17 +31,19 @@ func main() {
 	config := getConfig()
 	templates := getTemplates()
 
-	saveTemplate(config.output, templates.gitignore, nil)
-	saveTemplate(config.output, templates.modules, nil)
-	saveTemplate(config.output, templates.goSum, nil)
-	saveTemplate(config.output, templates.makefile, nil)
+	outputPath := createOutputDirectory(config.output, config.name)
 
-	saveTemplate(config.output, templates.goMod, struct {
+	saveTemplate(outputPath, templates.gitignore, nil)
+	saveTemplate(outputPath, templates.modules, nil)
+	saveTemplate(outputPath, templates.goSum, nil)
+	saveTemplate(outputPath, templates.makefile, nil)
+
+	saveTemplate(outputPath, templates.goMod, struct {
 		Name string
 	}{
 		Name: config.name,
 	})
-	saveTemplate(config.output, templates.mainGo, struct {
+	saveTemplate(outputPath, templates.mainGo, struct {
 		Network string
 		Port    uint
 	}{
@@ -52,24 +53,32 @@ func main() {
 }
 
 func saveTemplate(output string, template *asset, data interface{}) {
+	templateFileName := strings.Replace(template.info.Name(), "templates/", "", -1)
+	templateString := string(template.bytes)
+
 	if data == nil {
-		saveFile(output, getTemplateFileName(template), string(template.bytes))
+		saveFile(output, templateFileName, templateString)
 	} else {
-		saveFile(output, getTemplateFileName(template), fillTemplate(string(template.bytes), data))
+		saveFile(output, templateFileName, fillTemplate(templateString, data))
 	}
 }
 
-func getTemplateFileName(file *asset) string {
-	return strings.Replace(file.info.Name(), "templates/", "", -1)
-}
+func createOutputDirectory(outputPath string, name string) string {
+	if string(outputPath[len(outputPath)-1:]) != "/" {
+		outputPath += "/"
+	}
+	outputPath += name
 
-func saveFile(outputPath string, name string, text string) {
 	err := os.MkdirAll(outputPath, os.ModePerm)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	file, err := os.OpenFile(outputPath+"/"+name, os.O_RDWR, 0644)
+	return outputPath
+}
+
+func saveFile(outputPath string, name string, text string) {
+	file, err := os.Create(outputPath + "/" + name)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -169,8 +178,6 @@ func getConfig() *config {
 		config.network != "unixpacket" {
 		log.Fatal("Unexpected network")
 	}
-
-	config.output = filepath.Dir(config.output)
 
 	return config
 }
