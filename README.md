@@ -3,12 +3,12 @@
 This package for generate base code for microservice.
 
 ## Install
-`go get github.com/umirode/go-mg-net`
+`go get github.com/umirode/go-mg`
 
 ## Usage 
-`go-mg-net -name=greeter -network=tcp -address=:56001 -output=/home/user/projects`
+`go-mg -name=greeter -network=tcp -address=:56001 -output=/home/user/projects`
 
-For help: `go-mg-net -help`
+For help: `go-mg -help`
 
 ## Protobuf files
 Add your repositories with protobuf files in `.modules` file (one line - one repository).

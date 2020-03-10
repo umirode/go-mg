@@ -1,5 +1,5 @@
 # Created by .ignore support plugin (hsz.mobi)
 vendor/
-modules/
+prot_vendor/
 *.iml
 .idea/

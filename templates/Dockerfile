@@ -1,11 +1,12 @@
 FROM golang:1.13.6-alpine AS builder
 
-ENV GO111MODULE=auto
+ENV GO111MODULE=on
 ENV CGO_ENABLED=0
 ENV GOOS=linux
 
-RUN apk add --no-cache git make bash protobuf ca-certificates tzdata && \
+RUN apk add --no-cache git protoc ca-certificates tzdata openssh && \
     go get github.com/golang/protobuf/protoc-gen-go && \
+    go get -u github.com/umirode/prot && \
     \
     adduser -s /bin/true -u 1000 -D -h /app app && \
     sed -i -r "/^(app|root)/!d" /etc/group /etc/passwd && \
@@ -13,12 +14,15 @@ RUN apk add --no-cache git make bash protobuf ca-certificates tzdata && \
 
 WORKDIR /app
 
+COPY prot.yaml ./
+RUN prot install
+
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN make install-modules && \
-    go build -ldflags '-w -s -extldflags "-static"' -o /app/bin .
+
+RUN go build -ldflags '-w -s -extldflags "-static"' -o /app/bin .
 
 FROM scratch
 
