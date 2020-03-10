@@ -1,4 +1,4 @@
-module go-mg-net
+module github.com/umirode/go-mg
 
 go 1.13
 
